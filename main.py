@@ -10,6 +10,10 @@ def main():
 
     json_saver = JSONSaver(keyword)
     json_saver.add_vacancies(hh_vacancies)
+    data = json_saver.select()
+
+    for row in data:
+        print(row, end=f"\n\n{'='*200}\n\n")
 
 
 if __name__ == "__main__":
