@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 import requests
 from pprint import pprint
@@ -24,9 +25,22 @@ class HeadHunterAPI(Engine):
         pages = 1
         response = []
         for page in range(pages):
-            print(f"Парсинг страницы {page+1}", end=": ")
+            print(f"Парсинг страницы {page + 1}", end=": ")
             values = self.get_request(keyword, page)
             print(f"Найдено {len(values)} вакансий.")
             response.extend(values)
 
         return response
+
+
+class JSONSaver:
+    def __init__(self, keyword):
+        self.__filename = f'{keyword.title()}.json'
+
+    @property
+    def filename(self):
+        return self.__filename
+
+    def add_vacancies(self, data):
+        with open(self.__filename, 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
