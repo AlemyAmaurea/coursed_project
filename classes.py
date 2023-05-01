@@ -10,7 +10,9 @@ class Engine(ABC):
 
 
 class HeadHunterAPI(Engine):
+    """Класс для работы с API Head Hunter"""
     def get_request(self, keyword, page):
+        """Функция делает запрос на сайт и возвращает результат в формате json"""
         # headers = {
         #     "User-Agent": "TestApp/1.0(test@example.com)"
         # }
@@ -22,6 +24,7 @@ class HeadHunterAPI(Engine):
         return requests.get("https://api.hh.ru/vacancies", params=params).json()['items']
 
     def get_vacancies(self, keyword, count=1000):
+        """Функция получает список заданных вакансий по кодовому слову и позвращает его"""
         pages = 1
         response = []
         for page in range(pages):
@@ -33,7 +36,8 @@ class HeadHunterAPI(Engine):
         return response
 
 class Vacancy:
-    __slots__ = ('title', 'salary_min', 'salary_max', 'currency', 'employer', 'link')
+    """Класс вакансий"""
+    __slots__ = ('title', 'salary_min', 'salary_max', 'currency', 'employer', 'link', 'salary_sort_min', 'salary_sort_max')
 
     def __init__(self, title, salary_min, salary_max, currency, employer, link):
         self.title = title
@@ -43,6 +47,12 @@ class Vacancy:
         self.employer = employer
         self.link = link
 
+        self.salary_sort_min = salary_min
+        self.salary_sort_max = salary_max
+        if currency and currency == 'USD':
+            self.salary_sort_min = self.salary_sort_min * 83 if self.salary_sort_min else None
+            self.salary_sort_max = self.salary_sort_max * 83 if self.salary_sort_max else None
+
     def __str__(self):
         salary_min = f'От {self.salary_min}' if self.salary_min else ''
         salary_max = f'До {self.salary_max}' if self.salary_max else ''
@@ -51,8 +61,17 @@ class Vacancy:
             salary_min = "Заработная плата не указана"
         return f"{self.employer}: {self.title} \n{salary_min} {salary_max} {currency} \nURL: {self.link}"
 
+    def __gt__(self, other):
+        """Метод сравнения по минимальной зарплате"""
+        if not other.salary_sort_min:
+            return True
+        if not self.salary_sort_min:
+            return False
+        return self.salary_sort_min >= other.salary_min
+
 
 class JSONSaver:
+    """Класс для работы с данными о вакансиях"""
     def __init__(self, keyword):
         self.__filename = f'{keyword.title()}.json'
 
@@ -61,10 +80,12 @@ class JSONSaver:
         return self.__filename
 
     def add_vacancies(self, data):
+        """Добавляет вакансии в файл 'self.__filename'"""
         with open(self.__filename, 'w', encoding='utf-8') as file:
             json.dump(data, file, indent=4, ensure_ascii=False)
 
     def select(self):
+        """Функция создает экземпляры класса с заданными параметрами"""
         with open(self.__filename, 'r', encoding='utf-8') as file:
             data = json.load(file)
 
